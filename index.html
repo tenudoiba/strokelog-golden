@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Strokelog — The Work Behind the Work</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{color-scheme:light;--wall:#fffdf8;--floor:#f1e5c8;--frame:#111111;--mat:#ffffff;--ink:#111111;--mute:#6c6558;--line:#ded3bb;--pencil:#c99a22;--field:#fffaf0;--gold:#c99a22;--black:#111111}
+*{box-sizing:border-box}
+body{margin:0;background:var(--wall);color:var(--ink);font-family:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:300;line-height:1.5;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0;text-align:left}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--pencil);outline-offset:3px}
+header{padding:22px 24px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:var(--black);color:#fff;border-bottom:5px solid var(--gold)}
+.brand{font-weight:600;letter-spacing:.16em;text-transform:uppercase;font-size:1.02rem;display:flex;align-items:center;gap:12px}
+.brand:before{content:"";display:inline-block;width:12px;height:12px;background:var(--gold);transform:rotate(45deg)}
+nav{display:flex;gap:18px;font-size:.92rem;flex-wrap:wrap}
+nav button{color:#fff;text-decoration:none;border-bottom:1px solid var(--gold);padding:5px 0}
+nav button:hover{color:#e5c56c}
+.crumb{padding:6px 24px 0;color:var(--mute);font-size:.9rem}
+.crumb button{text-decoration:underline;text-underline-offset:3px}
+.intro{padding:48px 24px 18px;max-width:760px;border-bottom:1px solid var(--line)}
+.intro h1{font-weight:400;font-size:clamp(2.2rem,7vw,4.2rem);line-height:1.02;letter-spacing:-.04em;margin:0 0 18px;max-width:13ch}
+.intro h1 em{font-style:normal;color:#a77a0b}
+.intro:before{content:"A LIVING GALLERY OF ART AND PROCESS";display:block;color:#a77a0b;font-size:.72rem;font-weight:600;letter-spacing:.18em;margin-bottom:18px}
+.intro p{color:var(--mute);margin:0;max-width:44ch}
+.hall{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin-top:28px;border-bottom:36px solid var(--gold)}
+.wall{flex:0 0 min(86vw,560px);scroll-snap-align:center;padding:40px 28px 36px;min-height:420px;display:flex;flex-direction:column;justify-content:space-between}
+.hang{display:flex;align-items:flex-end;justify-content:center;gap:26px;flex:1;padding-bottom:28px}
+.frame{display:block;border:1px solid var(--gold);background:var(--mat);padding:12px;box-shadow:0 10px 18px -12px rgba(0,0,0,.28)}
+.frame img{display:block;width:100%;height:auto}
+.hang .frame:nth-child(1){width:46%}
+.hang .frame:nth-child(2){width:34%;margin-bottom:60px}
+.hang .frame:nth-child(3){width:26%}
+.plaque{border-left:2px solid var(--ink);padding-left:12px}
+.plaque b{font-weight:600;display:block}
+.plaque span{color:var(--mute);font-size:.9rem}
+.link{text-decoration:underline;text-underline-offset:4px;font-size:.92rem;display:inline-block;margin-top:8px}
+.hint,.empty{padding:14px 24px;color:var(--mute);font-size:.9rem}
+.room,.piece,.form{padding:32px 24px 0;margin:0 auto}
+.room{max-width:1000px}.piece{max-width:760px}.form{max-width:560px}
+h2{font-weight:300;font-size:clamp(1.6rem,5vw,2.5rem);margin:0 0 6px}
+.sub{color:var(--mute);margin:0 0 40px}
+.works{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:64px 44px;padding-bottom:64px}
+.work .frame{margin-bottom:14px}
+.piece .frame{margin:0 auto 22px;max-width:620px}
+.seal{display:inline-block;margin-top:12px;border:1px solid var(--ink);padding:3px 10px;font-size:.85rem;font-weight:600}
+.seal i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--pencil);margin-right:7px}
+.walk{margin:40px 0 0;padding:0;list-style:none}
+.walk li{display:grid;grid-template-columns:44px 1fr;gap:14px;padding:22px 0;border-top:1px solid var(--line)}
+.walk .n{width:44px;height:44px;border:1px solid var(--ink);border-radius:50%;display:grid;place-items:center;font-weight:600}
+.walk img,.walk video{display:block;max-width:100%;width:340px;margin-top:10px;border:1px solid var(--line)}
+label{display:block;margin:18px 0 6px;font-weight:600;font-size:.92rem}
+input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);background:var(--field);border-radius:4px}
+.btn{display:inline-block;background:var(--black);color:#fff;padding:12px 22px;margin-top:22px;border-radius:2px;border-bottom:3px solid var(--gold);font-weight:600}
+.btn[disabled]{opacity:.5}
+.ghost{border:1px solid var(--gold);background:#fffaf0;color:var(--black);padding:8px 14px;margin-top:12px;border-radius:2px}
+.stage{border-top:1px solid var(--line);margin-top:18px;padding-top:4px}
+.msg{margin-top:16px;color:var(--mute)}
+.err{color:#C2362B;font-weight:600}
+.foot{height:60px}
+</style>
+</head>
+<body>
+<header><span class="brand">Strokelog <span style="font-weight:300;letter-spacing:.04em;color:#e5c56c">/ The Work Behind the Work</span></span><nav id="nav"></nav></header>
+<div class="crumb" id="crumb"></div>
+<main id="view"></main>
+<div class="foot"></div>
+<script>
+var SUPABASE_URL="https://znxegkynyzvdubsstgtf.supabase.co";
+var SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpueGVna3lueXp2ZHVic3N0Z3RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MTM5NDIsImV4cCI6MjEwNzI4OTk0Mn0.fZZ0654rQIgX2PlGUYFNTwjL_mAnzYPARcCFoLhFCZg";
+var sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+var view=document.getElementById("view"),crumb=document.getElementById("crumb"),nav=document.getElementById("nav");
+var user=null,artists=[];
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function url(p){return sb.storage.from("art").getPublicUrl(p).data.publicUrl}
+function frame(p,alt){return '<span class="frame"><img src="'+esc(url(p))+'" alt="'+esc(alt)+'" loading="lazy"></span>'}
+function isVideo(p){return /\.(mp4|webm|mov|m4v)$/i.test(p)}
+function media(p,n){var u=esc(url(p));return isVideo(p)?'<video src="'+u+'" controls playsinline preload="metadata"></video>':'<img src="'+u+'" alt="Stage '+(n+1)+'" loading="lazy">'}
+function setCrumb(parts){crumb.innerHTML="";parts.forEach(function(p,i){
+  if(i)crumb.appendChild(document.createTextNode(" / "));
+  if(p.fn){var b=document.createElement("button");b.textContent=p.t;b.onclick=p.fn;crumb.appendChild(b)}else crumb.appendChild(document.createTextNode(p.t));
+})}
+function drawNav(){
+  nav.innerHTML="";
+  function add(t,fn){var b=document.createElement("button");b.textContent=t;b.onclick=fn;nav.appendChild(b)}
+  add("Gallery",hall);
+  if(user){add("Upload art",uploadForm);add("Log out",function(){sb.auth.signOut().then(function(){user=null;drawNav();hall()})})}
+  else add("Artist log in",authForm);
+}
+function load(){
+  return Promise.all([
+    sb.from("profiles").select("*"),
+    sb.from("artworks").select("*").order("created_at",{ascending:false}),
+    sb.from("stages").select("*").order("position"),
+    sb.from("artwork_verifications").select("artwork_id,status,submitted_at,reviewed_at,public_note")
+  ]).then(function(r){
+    if(r[0].error||r[1].error||r[2].error||r[3].error)throw (r[0].error||r[1].error||r[2].error||r[3].error);
+    var verifications=r[3].data||[];
+    artists=r[0].data.map(function(p){
+      p.works=r[1].data.filter(function(a){return a.artist_id===p.id}).map(function(a){
+        a.steps=r[2].data.filter(function(s){return s.artwork_id===a.id});
+        a.verification=verifications.find(function(v){return v.artwork_id===a.id})||{status:"unverified"};
+        return a});
+      return p}).filter(function(p){return p.works.length});
+  });
+}
+function hall(){
+  setCrumb([]);view.innerHTML='<p class="empty">Loading the gallery...</p>';
+  load().then(function(){
+    var intro='<div class="intro"><h1>The work is more than <em>what you see.</em></h1><p>Art deserves more than a glance. Meet the artist, experience the finished work, and discover the thought, skill, choices and labour behind it when the process is shared.</p></div>';
+    if(!artists.length){view.innerHTML=intro+'<p class="empty">The walls are empty for now. The first artists are on their way.</p>';return}
+    var w=artists.map(function(a,idx){
+      var f=a.works.slice(0,3).map(function(k){return '<button data-a="'+idx+'" aria-label="Enter '+esc(a.display_name)+'\'s room">'+frame(k.image_path,k.title)+'</button>'}).join("");
+      return '<section class="wall"><div class="hang">'+f+'</div><div class="plaque"><b>'+esc(a.display_name)+'</b><span>'+esc(a.city||"")+(a.city?", ":"")+a.works.length+' work'+(a.works.length>1?'s':'')+' with process</span><br><button class="link" data-a="'+idx+'">Enter the room</button></div></section>';
+    }).join("");
+    view.innerHTML=intro+'<div class="hall" tabindex="0" aria-label="Gallery hall, scroll sideways">'+w+'</div><p class="hint">Swipe sideways to walk to the next artist.</p>';
+    view.querySelectorAll("[data-a]").forEach(function(b){b.onclick=function(){room(+b.dataset.a)}});
+    window.scrollTo(0,0);
+  }).catch(function(e){view.innerHTML='<p class="empty err">Could not load the gallery. '+esc(e.message||e)+'</p>'});
+}
+function room(i){
+  var a=artists[i];setCrumb([{t:"Gallery",fn:hall},{t:a.display_name}]);
+  var w=a.works.map(function(k,j){return '<div class="work"><button data-w="'+j+'" aria-label="Open '+esc(k.title)+'">'+frame(k.image_path,k.title)+'</button><div class="plaque"><b>'+esc(k.title)+'</b><span>'+esc(k.medium||"")+', '+k.steps.length+' stage'+(k.steps.length===1?'':'s')+'</span></div></div>'}).join("");
+  view.innerHTML='<div class="room"><h2>'+esc(a.display_name)+'</h2><p class="sub">'+esc(a.city||"")+'</p><div class="works">'+w+'</div></div>';
+  view.querySelectorAll("[data-w]").forEach(function(b){b.onclick=function(){piece(i,+b.dataset.w)}});
+  window.scrollTo(0,0);
+}
+function piece(i,j){
+  var a=artists[i],k=a.works[j];
+  setCrumb([{t:"Gallery",fn:hall},{t:a.display_name,fn:function(){room(i)}},{t:k.title}]);
+  var s=k.steps.map(function(t,n){return '<li><span class="n">'+(n+1)+'</span><div><b>Stage '+(n+1)+'</b><br>'+esc(t.note||"")+media(t.image_path,n)+'</div></li>'}).join("");
+  var status=(k.verification&&k.verification.status)||"unverified";
+  var labels={
+    unverified:"Work shared",
+    evidence_submitted:"Submitted for review",
+    under_review:"Under review",
+    process_documented:"Process reviewed",
+    verification_declined:"Review not approved",
+    disputed:"Review disputed"
+  };
+  var statusNote=(k.verification&&k.verification.public_note)?'<p class="msg">'+esc(k.verification.public_note)+'</p>':"";
+  var owns=user&&user.id===a.id;
+  var submitBox=(user&&user.id===k.artist_id&&status==="unverified"&&k.steps.length>0)?
+    '<div class="stage"><h2 style="font-size:1.25rem">Submit your process for review</h2><p class="msg">Explain how these stages relate to the finished work. Submitting does not guarantee approval.</p><label for="verification-declaration">Artist declaration</label><textarea id="verification-declaration" rows="4" placeholder="I created this artwork. These stages show..." minlength="20"></textarea><button class="btn" id="submit-verification">Submit for review</button><div class="msg" id="verification-msg"></div></div>':"";
+  var seal='<span class="seal"><i></i>'+esc(labels[status]||"Status unavailable")+'</span>';
+  var processInfo=k.steps.length?'<p class="msg">The artist has shared material about this work\u2019s process. Documentation can help people understand the work, but it is not absolute proof of authorship.</p>':'<p class="msg">The finished work is here to be experienced on its own. Process material can be added when available.</p>';
+  view.innerHTML='<div class="piece">'+frame(k.image_path,k.title)+'<div class="plaque"><b style="font-size:1.1rem">'+esc(k.title)+'</b><span>'+esc(a.display_name)+', '+esc((k.medium||"").toLowerCase())+'</span></div>'+seal+statusNote+processInfo+(k.steps.length?'<ol class="walk">'+s+'</ol>':'')+submitBox+'</div>';
+  var submit=document.getElementById("submit-verification");
+  if(submit)submit.onclick=function(){
+    var msg=document.getElementById("verification-msg"),declaration=document.getElementById("verification-declaration").value.trim();
+    if(declaration.length<20){msg.className="msg err";msg.textContent="Please write at least 20 characters.";return}
+    submit.disabled=true;msg.className="msg";msg.textContent="Submitting...";
+    sb.from("artwork_verification_submissions").insert({artwork_id:k.id,artist_id:user.id,declaration:declaration})
+      .then(function(r){
+        if(r.error)throw r.error;
+        msg.textContent="Submitted. Your artwork is now awaiting review.";
+        k.verification.status="evidence_submitted";
+        piece(i,j);
+      }).catch(function(e){msg.className="msg err";msg.textContent=e.message||"Could not submit. Please try again.";submit.disabled=false});
+  };
+  window.scrollTo(0,0);
+}
+/* sign up and log in */
+function authForm(mode){
+  mode=mode==="up"?"up":"in";setCrumb([{t:"Gallery",fn:hall},{t:mode==="up"?"Artist sign up":"Artist log in"}]);
+  view.innerHTML='<div class="form"><h2>'+(mode==="up"?"Join as an artist":"Welcome back")+'</h2><p class="sub">'+(mode==="up"?"Create your wall in the gallery.":"Log in to upload your art.")+'</p>'+
+  (mode==="up"?'<label for="dn">Artist name</label><input id="dn" autocomplete="name"><label for="ct">City</label><input id="ct" placeholder="Lagos">':'')+
+  '<label for="em">Email</label><input id="em" type="email" autocomplete="email"><label for="pw">Password (6 or more characters)</label><input id="pw" type="password" autocomplete="'+(mode==="up"?"new-password":"current-password")+'">'+
+  '<button class="btn" id="go">'+(mode==="up"?"Create account":"Log in")+'</button><div class="msg" id="msg"></div><button class="link" id="sw">'+(mode==="up"?"I already have an account":"New here? Sign up as an artist")+'</button></div>';
+  document.getElementById("sw").onclick=function(){authForm(mode==="up"?"in":"up")};
+  document.getElementById("go").onclick=function(){
+    var m=document.getElementById("msg"),b=this,em=document.getElementById("em").value.trim(),pw=document.getElementById("pw").value;
+    m.className="msg";
+    if(!em||!pw){m.className="msg err";m.textContent="Please enter your email and password.";return}
+    if(mode==="up"&&pw.length<6){m.className="msg err";m.textContent="Use a password with at least 6 characters.";return}
+    m.textContent="One moment...";b.disabled=true;
+    var p;
+    if(mode==="up"){
+      var dn=document.getElementById("dn").value.trim();
+      if(!dn){m.className="msg err";m.textContent="Please enter your artist name.";b.disabled=false;return}
+      p=sb.auth.signUp({email:em,password:pw,options:{data:{display_name:dn,city:document.getElementById("ct").value.trim()}}});
+    }else p=sb.auth.signInWithPassword({email:em,password:pw});
+    p.then(function(r){
+      if(r.error)throw r.error;
+      if(!r.data.session){m.textContent="Check your email to confirm your account, then log in.";b.disabled=false;return}
+      return startSession(r.data.session.user).then(uploadForm);
+    }).catch(function(e){m.className="msg err";m.textContent=e.message||String(e);b.disabled=false});
+  };
+}
+function startSession(u){
+  user=u;drawNav();
+  return sb.from("profiles").select("id").eq("id",u.id).then(function(r){
+    if(r.data&&r.data.length)return;
+    var md=u.user_metadata||{};
+    return sb.from("profiles").insert({id:u.id,display_name:md.display_name||(u.email||"Artist").split("@")[0],city:md.city||null});
+  });
+}
+/* upload */
+function shrink(file){
+  return new Promise(function(res,rej){
+    var img=new Image(),r=new FileReader();
+    r.onload=function(){img.onload=function(){
+      var max=1600,s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas");
+      c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      c.toBlob(function(b){res(b||file)},"image/jpeg",0.85)};img.onerror=function(){rej(new Error("That photo cannot be read. Please pick a normal JPG or PNG photo."))};img.src=r.result};
+    r.onerror=function(){res(file)};r.readAsDataURL(file);
+  });
+}
+function put(file){
+  var v=file.type.indexOf("video/")===0;
+  var job=v?Promise.resolve({blob:file,ext:({"video/mp4":"mp4","video/webm":"webm","video/quicktime":"mov"})[file.type]||"mp4",type:file.type||"video/mp4"}):shrink(file).then(function(b){return{blob:b,ext:"jpg",type:"image/jpeg"}});
+  return job.then(function(o){
+    var path=user.id+"/"+crypto.randomUUID()+"."+o.ext;
+    return sb.storage.from("art").upload(path,o.blob,{contentType:o.type}).then(function(r){if(r.error)throw r.error;return path});
+  });
+}
+function uploadForm(){
+  if(!user){authForm("in");return}
+  setCrumb([{t:"Gallery",fn:hall},{t:"Upload art"}]);
+  view.innerHTML='<div class="form"><h2>Share a piece</h2><p class="sub">Begin with the finished artwork. Add the title and medium, then publish it to your gallery wall. The finished piece can stand on its own; process material is welcome, but never required.</p>'+
+  '<label for="tt">Artwork title</label><input id="tt" maxlength="120" placeholder="Give this piece a title">'+
+  '<label for="md">Medium</label><select id="md"><option>Sketch</option><option>Painting</option></select>'+
+  '<label for="fin">Finished artwork — photo required</label><input id="fin" type="file" accept="image/*"><p class="msg">Choose a clear photo where the artwork is easy to see. Uploads must be 30 MB or smaller.</p>'+
+  '<h2 style="font-size:1.3rem;margin-top:32px">Show the process (optional)</h2><p class="msg">The work is more than what you see, but every artist documents differently. You can share a sketch, a progress photo, a short video, or a note about a decision you made. You do not need photos of every step, a perfect studio setup, or a recording of yourself working. If you are describing the process from memory rather than showing a contemporaneous record, say so in your note.</p><div id="stages"></div><button class="ghost" id="add">+ Add another process moment</button>'+
+  '<p class="msg">Each process moment needs a photo or video. Notes are optional and can explain what changed, what you tried, a material you used, a challenge, or why you made a choice. Photos and videos help people understand your process; by themselves, they do not prove authorship.</p>'+
+  '<button class="btn" id="pub">Publish artwork</button><div class="msg" id="msg" role="status" aria-live="polite"></div></div>';
+  var box=document.getElementById("stages");
+  function addStage(){var d=document.createElement("div");d.className="stage";d.innerHTML='<label>Process photo or short video</label><input type="file" accept="image/*,video/mp4,video/webm,video/quicktime" class="sf"><label>What would you like people to know? (optional)</label><input class="sn" maxlength="500" placeholder="e.g. I changed the outline after testing the composition"><p class="msg">Photo or video: 30 MB max. Keep the note short and specific if you can.</p>';box.appendChild(d)}
+  addStage();document.getElementById("add").onclick=addStage;
+  document.getElementById("pub").onclick=function(){
+    var b=this,m=document.getElementById("msg"),title=document.getElementById("tt").value.trim(),fin=document.getElementById("fin").files[0];
+    var st=[].slice.call(box.querySelectorAll(".stage")).map(function(d){return{f:d.querySelector(".sf").files[0],n:d.querySelector(".sn").value.trim()}}).filter(function(x){return x.f});
+    m.className="msg";
+    if(!title||!fin){m.className="msg err";m.textContent="Add an artwork title and choose a photo of the finished piece to continue. Process stages are optional.";return}
+    
+    var big=st.concat([{f:fin}]).filter(function(x){return x.f.size>30*1024*1024})[0];
+    if(big){m.className="msg err";m.textContent="One of your files is larger than 30 MB. Choose a smaller photo or a shorter/compressed video, then try again.";return}
+    b.disabled=true;m.textContent="Publishing your artwork… Keep this page open until the upload finishes.";
+    var aid=crypto.randomUUID();
+    put(fin).then(function(fp){
+      return sb.from("artworks").insert({id:aid,artist_id:user.id,title:title,medium:document.getElementById("md").value,image_path:fp}).then(function(r){if(r.error)throw r.error});
+    }).then(function(){
+      return st.reduce(function(chain,x,i){return chain.then(function(){m.textContent="Uploading stage "+(i+1)+" of "+st.length+"...";
+        return put(x.f).then(function(p){return sb.from("stages").insert({artwork_id:aid,position:i+1,note:x.n,image_path:p}).then(function(r){if(r.error)throw r.error})})})},Promise.resolve());
+    }).then(function(){m.textContent="Your artwork has been published. Thank you for sharing your work.";hall()})
+    .catch(function(e){m.className="msg err";m.textContent="We could not finish publishing this artwork. Check your connection and try again. If you see the piece in your gallery already, refresh before retrying so you do not create a duplicate.";b.disabled=false});
+  };
+}
+sb.auth.getSession().then(function(r){
+  var p=r.data&&r.data.session?startSession(r.data.session.user):Promise.resolve();
+  p.then(function(){drawNav();hall()});
+});
+</script>
+</body>
+</html>
