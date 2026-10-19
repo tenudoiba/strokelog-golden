@@ -1,0 +1,12 @@
+name: Keep Supabase awake
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          curl -fsS --max-time 30 "https://znxegkynyzvdubsstgtf.supabase.co/rest/v1/profiles?select=id&limit=1" -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpueGVna3lueXp2ZHVic3N0Z3RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MTM5NDIsImV4cCI6MjEwNzI4OTk0Mn0.fZZ0654rQIgX2PlGUYFNTwjL_mAnzYPARcCFoLhFCZg"
